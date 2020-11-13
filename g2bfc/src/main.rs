@@ -326,7 +326,9 @@ tape: times {} db 0
                     ret.extend(self.get_jumped_functions(child));
                 }
             }
-            NodeType::Jump(to) => ret.push(to.clone()),
+            NodeType::Jump(to) => {
+                ret.push(to.clone())
+            },
 
             _ => {}
         };
@@ -343,10 +345,28 @@ tape: times {} db 0
                     .iter()
                     .any(|node: &CompilableNode| match &node.kind {
                         NodeType::Function(s) => true,
+                        NodeType::Jump(to) => {
+                            if let Some( dest ) = self.find_function(to, &self.root) {
+                                for child in &dest.children {
+                                    match &child.kind {
+                                        NodeType::Jump(dest2) => {
+                                            if *dest2 == *name {
+                                                println!("found recursion");
+                                                return true
+                                            }
+                                        }
+                                        _=>{}
+                                    }
+                                }
+                            }
+                            
+
+                            false
+                        }
                         _ => false,
                     })
                 {
-                    //inga funktioner
+                    //inga funktioner eller loopar
                     ret.push(name.clone())
                 }
             }

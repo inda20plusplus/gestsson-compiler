@@ -24,23 +24,26 @@ _root:
 mov edx,1
 mov eax, tape
 _start:
-getch
-cmp [eax], 0
-je _fR3_0
+add [eax], 1
+add [eax], 1
+jmp _fR1_0
+
+
+
+
+
+_fL12_0:
+add [eax], 5
+jmp _fR6_0
+
+
 _fR1_0:
-add [eax], 16
-add [eax], 16
-putch
-jmp _end
+add [eax], 4
+_fR6_0:
+add [eax], 5
+jmp _fL12_0
 
 
-
-
-cmp [eax], 0
-jne _fR1_0
-_fR3_0:
-
-putch
 jmp _end
 
 
