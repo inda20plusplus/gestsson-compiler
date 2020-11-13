@@ -117,7 +117,7 @@ pub struct Program {
     pub tape_height: isize,
     pub branch_names : HashSet<String>,
     pub inline_branches : HashSet<String>,
-    pub unused_branches : HashSet<String>
+    pub used_branches : HashSet<String>
 }
 
 impl Program {
@@ -129,7 +129,7 @@ impl Program {
             instructions: instructions,
             branch_names: HashSet::new(),
             inline_branches: HashSet::new(),
-            unused_branches: HashSet::new()
+            used_branches: HashSet::new()
         }
     }
 
@@ -147,6 +147,7 @@ _root:
 mov edx,1
 mov eax, tape
 {}
+_end:
 mov eax,1
 int 0x80
 
@@ -169,6 +170,14 @@ tape: times {} db 0
         self.read_branch(&mut nroot, Vec2::new(0, 0), Direction::Right);
 
         self.root.children.insert(0, nroot);
+
+        for line in self.get_inline_functions(&self.root) {
+            self.inline_branches.insert(line);
+        }
+
+        for line in self.get_jumped_functions(&self.root) {
+            self.used_branches.insert(line);
+        }
     }
 
     fn read_branch(&mut self, node : &mut CompilableNode, mut pos : Vec2, cflow : Direction) {
@@ -193,11 +202,12 @@ tape: times {} db 0
                             }
 
                             let closer = closer.unwrap();
+                            let closer_name = self.branch_token(closer, cflow);
 
-                            node.children.push(CompilableNode::new(NodeType::JmpZero(self.branch_token(closer, cflow))));
+                            node.children.push(CompilableNode::new(NodeType::JmpZero(closer_name.clone())));
                             node.children.push(n_node);
                             node.children.push(CompilableNode::new(NodeType::JmpNonZero(opener)));
-
+                            node.children.push(CompilableNode::empty_function(closer_name));
                             pos = closer;
                         },
                         ']' => {
@@ -273,6 +283,47 @@ tape: times {} db 0
             }
             _ => None
         }
+    }
+
+    pub fn get_jumped_functions(&self, node : &CompilableNode) -> Vec<String> {
+        let mut ret = Vec::new();
+        match &node.kind {
+            NodeType::Function(func_name) => {
+                for child in &node.children {
+                    ret.extend(self.get_jumped_functions(child));
+                }
+            },
+            NodeType::Jump(to) => {
+                println!("jump to {}", to);
+                ret.push(to.clone())
+            }
+
+            _=>{}
+        };
+
+        ret
+    }
+
+    pub fn get_inline_functions(&self, node : &CompilableNode) -> Vec<String> {
+        let mut ret = Vec::new();
+        match &node.kind {
+            NodeType::Function(name) => {
+                if !node.children.iter().any(|node : &CompilableNode| match &node.kind {
+                    NodeType::Function(s) => true,
+                    _ => false
+                }) {
+                    //inga funktioner
+                    ret.push(name.clone())
+                }
+            },
+            _ => {}
+        }
+
+        for child in &node.children {
+            ret.extend(self.get_inline_functions(child))
+        }
+
+        ret
     }
 
     fn register_branch(&mut self, name: String) {

@@ -13,43 +13,36 @@ pop eax
 cmp [eax], 0
 je _fR3_0
 _fR1_0:
-jmp _fD2_0
+add [eax], 16
+add [eax], 16
+push eax
+mov ecx,eax
+mov ebx, 1
+mov eax, 4
+int 0x80
+pop eax
+jump _end
+
+
 
 
 cmp [eax], 0
 jne _fR1_0
+_fR3_0:
+
 push eax
 mov ecx,eax
 mov ebx, 1
 mov eax, 4
 int 0x80
 pop eax
-mov ebx, [eax]
-mov eax, 1
-int 0x80
-
-_fU4_17:
-add [eax], 16
-push eax
-mov ecx,eax
-mov ebx, 1
-mov eax, 4
-int 0x80
-pop eax
-mov ebx, [eax]
-mov eax, 1
-int 0x80
-
-_fR2_17:
-jmp _fU4_17
-
-
-_fD2_0:
-add [eax], 16
-jmp _fR2_17
+jump _end
 
 
 
+
+
+_end:
 mov eax,1
 int 0x80
 

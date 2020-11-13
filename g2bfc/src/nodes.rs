@@ -97,12 +97,7 @@ impl CompilableNode {
                 }
             }
 
-            Jump(to) => {
-                match b.kind {
-                    ExitNode => Some(CompilableNode::new(Jump(to.clone()))),
-                    _ => None
-                }
-            }
+            Jump(to) => Some(CompilableNode::new(Jump(to.clone()))),
 
             _ => None
         }
@@ -112,6 +107,11 @@ impl CompilableNode {
         use NodeType::*;
         match &self.kind {
             Function(name) => {
+                if program.inline_branches.contains(name) && program.used_branches.contains(name){
+                    println!("deciding to not write {}", name);
+                    return String::new();
+                }
+
                 let mut ret = name.clone() + ":\n";
                 for child in &self.children {
                     ret += child.compile(program).as_str();
@@ -123,7 +123,13 @@ impl CompilableNode {
             Jump(to) => {
                 if program.inline_branches.contains(to) {
                     if let Some(func) = program.find_function(to, &program.root) {
-                        return func.compile(program)
+                        let mut ret = String::new();
+                        for child in &func.children {
+                            ret += child.compile(program).as_str();
+                            ret += "\n";
+                        }
+
+                        return ret;
                     }
                     
                     String::new()
@@ -164,13 +170,7 @@ int 0x80
 pop eax"
                 )
             },
-            ExitNode => {
-                format!(
-"mov ebx, [eax]
-mov eax, 1
-int 0x80"
-                )
-            }
+            ExitNode => "jump _end".to_owned()
         }
     }
 }
