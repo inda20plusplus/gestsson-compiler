@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "g2bfc",
+	"g2bfint"
+]

@@ -1,0 +1,10 @@
+[package]
+name = "g2bfint"
+version = "0.1.0"
+authors = ["Emil Gestsson -laptop <gestsson@kth.se>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+getch = "0.2.1"
